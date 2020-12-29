@@ -76,37 +76,50 @@ class AlphaBeta(SearchAlgos):
             print()
             raise TimeoutError("Yoo")
 
-    def search(self, state, depth, max_player, alpha=ALPHA_VALUE_INIT, beta=BETA_VALUE_INIT):
+    def search(self, state, depth, is_father_max, alpha=ALPHA_VALUE_INIT, beta=BETA_VALUE_INIT):
         """Start the AlphaBeta algorithm.
         :param state: The state to start from.
         :param depth: The maximum allowed depth for the algorithm.
-        :param max_player: Whether this is a max node (True) or a min node (False).
+        :param is_father_max: Whether this is a max node (True) or a min node (False).
         :param alpha: alpha value
         :param beta: beta value
         :return: A tuple: (The min max algorithm value, The direction in case of max node or None in min mode)
         """
 
         self.throw_exception_if_timeout(state)
-        if self.goal and self.goal(state, max_player): return (self.utility(state, max_player), state.direction)
-        if depth == 0: return (self.utility(state, max_player), state.direction)
-        childrens = self.succ(state, max_player)
-        if max_player:
-            currMax = State(None, None, None, None, None, None)
+        if self.goal and self.goal(state, is_father_max): return (self.utility(state, is_father_max), state.direction)
+        if depth == 0: return (self.utility(state, is_father_max), state.direction)
+        children = self.succ(state, is_father_max)
+        if is_father_max:
+            currMax = State(None, None, None, None, None, None, None, None, None)
             currMax.value = -np.inf
-            for c in childrens:
-                v = self.search(c, depth - 1, not max_player,alpha,beta)
+            for c in children:
+                v = self.search(c, depth - 1, not is_father_max, alpha, beta)
                 c.value = v[0]
                 currMax = max(currMax, c)
                 alpha = max(currMax.value, alpha)
-                if currMax.value >= beta: return np.inf, currMax.direction
+                if currMax.value >= beta:
+                    self.restore_father(is_father_max, state, children)
+                    return np.inf, currMax.direction
+            self.restore_father(is_father_max, state, children)
             return currMax.value, currMax.direction
         else:
-            currMin = State(None, None, None, None, None, None)
+            currMin = State(None, None, None, None, None, None, None, None, None)
             currMin.value = np.inf
-            for c in childrens:
-                v = self.search(c, depth - 1, not max_player,alpha,beta)
+            for c in children:
+                v = self.search(c, depth - 1, not is_father_max, alpha, beta)
                 c.value = v[0]
                 currMin = min(currMin, c)
                 beta = min(currMin.value, alpha)
                 if currMin.value <= alpha: return np.inf, currMin.direction
             return (currMin.value, currMin.direction)
+
+    def restore_father(self, max_player, state, used_children):
+        father_pos = state.pos if max_player else state.opponent_pos
+        state.graph.add_node(father_pos)
+        for c in used_children:
+            child_pos = c.opponent_pos if max_player else c.pos
+            state.graph.add_edge(father_pos, child_pos)
+        print("has edge: ", state.graph.has_edge((3, 0), (2, 0)))
+        # print(state.graph.edges)
+
