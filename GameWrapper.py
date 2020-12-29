@@ -8,7 +8,7 @@ class GameWrapper:
                 terminal_viz, print_game_in_terminal, 
                 time_to_make_a_move=2, game_time=100, 
                 penalty_score=300, max_fruit_score=300, max_fruit_time=15):
-        """Initialize the game wrapper and the initial board state with parameters.
+        """Ini4tialize the game wrapper and the initial board state with parameters.
         input:
             - size: the size of the board.
             - block_positions: positions blocked on the board.
