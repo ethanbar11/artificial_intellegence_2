@@ -81,7 +81,7 @@ class Player(AbstractPlayer):
         return weighted_sum / prize_sum
 
     def calc_dist_to_pos(self, pos):
-        pass  # todo: calc distance between myself and the position
+        return len(nx.shortest_path(self.graph, source=self.pos, target=pos))
 
     def calc_prize(self, pos, prize, state):
-        return prize  # todo: some way to classify better prizes
+        return prize  # todo: find better way to classify better prizes
