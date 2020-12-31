@@ -83,4 +83,4 @@ class State:
         return self.value >= other.value
 
     def __str__(self):
-        return str(self.value)
+        return 'my pos : {} op pos : {} val : {}'.format(self.pos, self.opponent_pos, self.value)

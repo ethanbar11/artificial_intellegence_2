@@ -144,7 +144,7 @@ class Game:
             fruit_art.remove()
         del self.fruits_on_board[pos]
 
-    def add_fruit(self, pos):
+    def add_fruit(self, pos, value=None):
         if self.animated:
             fruit_idx = random.randint(0, len(self.fruits_paths) - 1)
             fruit_path = self.fruits_paths[fruit_idx]
@@ -156,12 +156,13 @@ class Game:
             fruit = None
 
         # choose value of fruit and update the tracking map
-        value = 50  # random.randint(3, self.max_fruit_score)
+        if not value:
+            value = random.randint(3, self.max_fruit_score)
         self.map[pos[0], pos[1]] = value
 
         # update fruits_on_board tracking
         board_time = self.min_fruit_time * 2
-        self.fruits_on_board[pos] = {'fruit_art': fruit, 'value': value, 'board_time_left': board_time}
+        self.fruits_on_board[pos] = {'fruit_art': '', 'value': value, 'board_time_left': board_time}
 
     # def create_fruits(self):
     #     num_free_places = len(np.where(self.map == 0)[0])
@@ -176,13 +177,23 @@ class Game:
     # TODO: Ours, to delete.
     def create_fruits(self):
         num_free_places = len(np.where(self.map == 0)[0])
-        if num_free_places != 0:
-            num_fruits = 1  # random.randint(1, int(num_free_places * self.fruits_max_part_of_free_spaces))
-            # add new fruits in free spaces (not occupied by players, fruits, blocked cells)
-            for _ in range(num_fruits):
-                pos = (3, 3)  # self.choose_fruit_pos() # don't cover the players, existing fruits and blocked cells
-                if pos != -1:
-                    self.add_fruit(pos)
+        # if num_free_places != 0:
+        #     num_fruits = 1  # random.randint(1, int(num_free_places * self.fruits_max_part_of_free_spaces))
+        #     # add new fruits in free spaces (not occupied by players, fruits, blocked cells)
+        #     for _ in range(num_fruits):
+        #         pos = (3, 3)  # self.choose_fruit_pos() # don't cover the players, existing fruits and blocked cells
+        #         if pos != -1:
+        #             self.add_fruit(pos)
+
+        # TODO: DELETE
+        board = np.loadtxt(open(r'./boards/test_board_1.csv', "rb"), delimiter=" ")
+
+        # mirror board
+        board = np.flipud(board)
+        for i in range(len(board)):
+            for j in range(len(board[0])):
+                if board[i][j] not in [-1, 1, 2, 0]:
+                    self.add_fruit((i, j), board[i][j])
 
     def update_fruits(self):
         # update fruits timings

@@ -4,9 +4,7 @@ import time
 
 from utils import ALPHA_VALUE_INIT, BETA_VALUE_INIT, np, State
 import sys
-
-
-# TODO: you can import more modules, if needed
+import networkx as nx
 
 
 class SearchAlgos:
@@ -89,7 +87,7 @@ class AlphaBeta(SearchAlgos):
         self.throw_exception_if_timeout(state)
         if self.goal and self.goal(state, is_father_max): return (self.utility(state, is_father_max), state.direction)
         if depth == 0: return (self.utility(state, is_father_max), state.direction)
-        children = self.succ(state, is_father_max)
+        children = self.succ(state, not is_father_max)
         if is_father_max:
             currMax = State(None, None, None, None, None, None, None, None, None)
             currMax.value = -np.inf
@@ -99,9 +97,8 @@ class AlphaBeta(SearchAlgos):
                 currMax = max(currMax, c)
                 alpha = max(currMax.value, alpha)
                 if currMax.value >= beta:
-                    self.restore_father(is_father_max, state, children)
                     return np.inf, currMax.direction
-            self.restore_father(is_father_max, state, children)
+            # self.restore_father(is_father_max, state, children)
             return currMax.value, currMax.direction
         else:
             currMin = State(None, None, None, None, None, None, None, None, None)
@@ -110,8 +107,11 @@ class AlphaBeta(SearchAlgos):
                 v = self.search(c, depth - 1, not is_father_max, alpha, beta)
                 c.value = v[0]
                 currMin = min(currMin, c)
-                beta = min(currMin.value, alpha)
-                if currMin.value <= alpha: return np.inf, currMin.direction
+                beta = min(currMin.value, beta)
+                if currMin.value <= alpha:
+                    return -np.inf, currMin.direction
+            # self.restore_father(is_father_max, state, children)
+
             return (currMin.value, currMin.direction)
 
     def restore_father(self, max_player, state, used_children):
@@ -120,6 +120,24 @@ class AlphaBeta(SearchAlgos):
         for c in used_children:
             child_pos = c.opponent_pos if max_player else c.pos
             state.graph.add_edge(father_pos, child_pos)
-        print("has edge: ", state.graph.has_edge((3, 0), (2, 0)))
+        is_there_path = print("has edge: ", nx.has_path(state.graph, (3, 3), (3, 0)))
+        print(state.pos)
+        for c in used_children:
+            print(c)
+
+        if not is_there_path:
+            print_board_to_terminal(state.board)
+            nx.draw(state.graph)
+            import matplotlib.pyplot as plt
+
+            plt.savefig('x.png')
+            pass
         # print(state.graph.edges)
 
+
+def print_board_to_terminal(board_to_print):
+    print('_' * len(board_to_print[0]) * 4)
+    for row in board_to_print:
+        row = [str(int(x)) if x != -1 else 'X' for x in row]
+        print(' | '.join(row))
+        print('_' * len(row) * 4)

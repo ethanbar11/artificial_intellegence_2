@@ -162,7 +162,6 @@ class GameWrapper:
 
         for player_index, (i, j) in enumerate(starts):
             board[i][j] = player_index + 1
-        
         return board
     
     @staticmethod
