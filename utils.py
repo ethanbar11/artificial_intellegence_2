@@ -63,6 +63,7 @@ class State:
         self.fruits_on_board_dictionary = fruits_on_board_dictionary
         self.finish_time = finish_time
         self.graph_diff_from_father = father_pos
+        self.current_score = 0
 
     def __lt__(self, other):
         return self.value < other.value

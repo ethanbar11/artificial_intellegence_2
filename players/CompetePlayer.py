@@ -88,11 +88,10 @@ class Player(AbstractPlayer):
         if pos in self.fruits_on_board_dict:
             del self.fruits_on_board_dict[pos]
         self.board[self.opponent_pos[0]][self.opponent_pos[1]] = -1
-        self.graph.remove_node(pos)
+        self.graph.remove_node(self.opponent_pos)
         self.board[pos[0]][pos[1]] = 2
         self.current_turn += 1
         self.opponent_pos = pos
-        # Add here changes to graph, need to update opponent pos.
 
     def update_fruits(self, fruits_on_board_dict):
         """Update your info on the current fruits on board (if needed).
@@ -113,8 +112,16 @@ class Player(AbstractPlayer):
     ########## helper functions for MiniMax algorithm ##########
     # TODO: add here the utility, succ, and perform_move functions used in MiniMax algorithm
     def utility(self, state, is_father_max_node):
-        fruit_util_val = self.fruit_util(state, is_father_max_player=is_father_max_node)
-        return fruit_util_val
+        NEW_MAX = 100
+        weights = {'fruit_util': 0.5, 'opponent_fruits_util': 0.5}
+        fruit_util_val = self.fruit_util(state, True)
+        fruit_util_opponent = self.fruit_util(state, False)
+        utils_val = \
+            weights['fruit_util'] * fruit_util_val + \
+            weights['opponent_fruits_util'] * fruit_util_opponent
+        # TODO: Change to converted value
+        converted_value = (utils_val + 1) * NEW_MAX  # grade value from 0 to 100
+        return utils_val
 
     def succ(self, state, is_father_max_player):
         # Expecting board, returns list of boards.
@@ -173,13 +180,10 @@ class Player(AbstractPlayer):
     def update_graph(self, changed_son_pos, is_father_max_player, pos_to_remove, state):
         new_graph = state.graph.copy()
         # If moving our player - delete last position
-        if not is_father_max_player:
-            new_graph.remove_node(state.pos)
-        else:
-            new_graph.remove_node(changed_son_pos)
-        # if new_graph.has_node(pos_to_remove):
-        #     new_graph.remove_node(pos_to_remove)
-        # if is_father_max_player:
+        new_graph.remove_node(state.opponent_pos if is_father_max_player else state.pos)
+        # if not is_father_max_player:
+        #     new_graph.remove_node(state.pos)
+        # else:
         #     new_graph.remove_node(changed_son_pos)
         return new_graph
 
@@ -195,14 +199,26 @@ class Player(AbstractPlayer):
         return new_board
 
     ########## helper functions for the search algorithm ##########
-    def fruit_util(self, state, is_father_max_player):
+    def fruit_util(self, state, my_player_heurisitic):
+        g2 = state.graph.copy()
+        edges = None
+        pos_to_remove = state.opponent_pos if my_player_heurisitic else state.pos
+        path_beginning_pos = state.opponent_pos if not my_player_heurisitic else state.pos
+        # Deleting from graph the opponent
+        edges = [i for i in state.graph.edges(pos_to_remove)]
+        state.graph.remove_node(pos_to_remove)
         weighted_sum = 0
+        # RETURN HERE
         for fruit_pos, val in state.fruits_on_board_dictionary.items():
-            d_i = self.calc_dist_to_pos(state, state.pos, fruit_pos)
+            d_i = self.calc_dist_to_pos(state, path_beginning_pos, fruit_pos)
             p_i = self.calc_prize(fruit_pos, val, state)
             if d_i * 2 <= self.max_fruit_turn - state.turn:
                 weighted_sum += p_i / d_i
-        return 0 if weighted_sum == 0 else weighted_sum / self.total_fruit_amount
+        # Restore graph
+        state.graph.add_node(pos_to_remove)
+        state.graph.add_edges_from(edges)
+        ret_val = 0 if weighted_sum == 0 else weighted_sum / self.total_fruit_amount
+        return ret_val if my_player_heurisitic else -ret_val
 
     def calc_dist_to_pos(self, state, my_pos, fruit_pos):
         if nx.has_path(state.graph, source=my_pos, target=fruit_pos):
@@ -211,6 +227,9 @@ class Player(AbstractPlayer):
 
     def calc_prize(self, pos, prize, state):
         return prize  # todo: find better way to classify better prizes
+
+    def curr_score_util(self, state):
+        pass
 
 
 def create_graph_of_board(board):
@@ -231,7 +250,7 @@ def create_graph_of_board(board):
                 graph.add_edge((i, j), (i - 1, j))
     for i in range(len(board)):
         for j in range(len(board[0])):
-            if board[i][j] in [-1, 2]:
+            if board[i][j] == -1:
                 graph.remove_node((i, j))
 
     return graph, pos, opponent_pos
