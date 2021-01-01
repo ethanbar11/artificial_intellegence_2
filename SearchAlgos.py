@@ -85,11 +85,11 @@ class AlphaBeta(SearchAlgos):
         """
 
         self.throw_exception_if_timeout(state)
-        if self.goal and self.goal(state, is_father_max): return (self.utility(state, is_father_max), state.direction)
+        if self.goal and self.goal(state): return (self.utility(state, is_father_max), state.direction)
         if depth == 0: return (self.utility(state, is_father_max), state.direction)
         children = self.succ(state, not is_father_max)
         if is_father_max:
-            currMax = State(None, None, None, None, None, None, None, None, None)
+            currMax = State(None, None, None, None, None, None, None, None, None, None, None)
             currMax.value = -np.inf
             for c in children:
                 v = self.search(c, depth - 1, not is_father_max, alpha, beta)
@@ -101,7 +101,7 @@ class AlphaBeta(SearchAlgos):
             # self.restore_father(is_father_max, state, children)
             return currMax.value, currMax.direction
         else:
-            currMin = State(None, None, None, None, None, None, None, None, None)
+            currMin = State(None, None, None, None, None, None, None, None, None, None, None)
             currMin.value = np.inf
             for c in children:
                 v = self.search(c, depth - 1, not is_father_max, alpha, beta)

@@ -162,7 +162,7 @@ class Game:
 
         # update fruits_on_board tracking
         board_time = self.min_fruit_time * 2
-        self.fruits_on_board[pos] = {'fruit_art': '', 'value': value, 'board_time_left': board_time}
+        self.fruits_on_board[pos] = {'fruit_art':fruit, 'value': value, 'board_time_left': board_time}
 
     # def create_fruits(self):
     #     num_free_places = len(np.where(self.map == 0)[0])
@@ -186,7 +186,7 @@ class Game:
         #             self.add_fruit(pos)
 
         # TODO: DELETE
-        board = np.loadtxt(open(r'./boards/test_board_1.csv', "rb"), delimiter=" ")
+        board = np.loadtxt(open(r'./boards/test_board_2.csv', "rb"), delimiter=" ")
 
         # mirror board
         board = np.flipud(board)

@@ -52,7 +52,7 @@ def get_board_from_csv(board_file_name):
 class State:
     def __init__(self, board, graph, direction, our_player_pos,
                  opponent_pos, turn, fruits_on_board_dictionary,
-                 finish_time, father_pos):
+                 finish_time, father_pos, current_player_score, opponent_player_score):
         self.board = board
         self.graph = graph
         self.direction = direction
@@ -63,7 +63,10 @@ class State:
         self.fruits_on_board_dictionary = fruits_on_board_dictionary
         self.finish_time = finish_time
         self.graph_diff_from_father = father_pos
-        self.current_score = 0
+        self.current_player_score = current_player_score
+        self.opponent_player_score = opponent_player_score
+        self.is_game_finished = False
+        self.my_player_finished_game = None
 
     def __lt__(self, other):
         return self.value < other.value
