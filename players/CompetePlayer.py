@@ -14,7 +14,7 @@ import matplotlib.pyplot as plt
 
 
 class Player(AbstractPlayer):
-    def __init__(self, game_time, penalty_score):
+    def __init__(self, game_time, penalty_score, weights=None):
         AbstractPlayer.__init__(self, game_time,
                                 penalty_score)  # keep the inheritance of the parent's (AbstractPlayer) __init__()
         # TODO: initialize more fields, if needed, and the wanted algorithm from SearchAlgos.py
@@ -34,6 +34,12 @@ class Player(AbstractPlayer):
 
         self.opponent_pos = None
         self.total_fruit_amount = None
+
+        if weights:
+            self.weights = weights
+        else:
+            self.weights = {'fruit_util': 0.2, 'opponent_fruits_util': 0.2, 'our_score': 0.2, 'opponent_score': 0.2,
+                   'voronoi': 0.2}
 
     def set_game_params(self, board):
         """Set the game parameters needed for this player.
@@ -162,19 +168,17 @@ class Player(AbstractPlayer):
                 return 1 if state.current_player_score > state.opponent_player_score - self.penalty_score else -1
 
         NEW_MAX = 100
-        weights = {'fruit_util': 0.2, 'opponent_fruits_util': 0.2, 'our_score': 0.2, 'opponent_score': 0.2,
-                   'voronoi': 0.2}
         fruit_util_val = self.fruit_util(state, True)
         fruit_util_opponent = self.fruit_util(state, False)
         our_score_util = state.current_player_score / self.total_fruit_amount
         opponent_score_util = -state.opponent_player_score / self.total_fruit_amount
         voronoi_util = self.voronoi_util(state)
         utils_val = \
-            weights['fruit_util'] * fruit_util_val + \
-            weights['our_score'] * our_score_util + \
-            weights['opponent_score'] * opponent_score_util + \
-            weights['opponent_fruits_util'] * fruit_util_opponent \
-            + weights['voronoi'] * voronoi_util
+            self.weights['fruit_util'] * fruit_util_val + \
+            self.weights['our_score'] * our_score_util + \
+            self.weights['opponent_score'] * opponent_score_util + \
+            self.weights['opponent_fruits_util'] * fruit_util_opponent \
+            + self.weights['voronoi'] * voronoi_util
         # TODO: Change to converted value
         converted_value = (utils_val + 1) * NEW_MAX  # grade value from 0 to 100
         return utils_val

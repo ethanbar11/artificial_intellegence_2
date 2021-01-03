@@ -16,7 +16,7 @@ if __name__ == "__main__":
                         help='The type of the second player.',
                         choices=players_options)
 
-    parser.add_argument('-board', default='test_board_2.csv', type=str,
+    parser.add_argument('-board', default='generic_board.csv', type=str,
                         help='Name of board file (.csv).')
 
     parser.add_argument('-move_time', default=60, type=float,
@@ -55,8 +55,12 @@ if __name__ == "__main__":
     penalty_score = args.penalty_score
     __import__(player_1_type)
     __import__(player_2_type)
-    player_1 = sys.modules[player_1_type].Player(game_time, penalty_score)
-    player_2 = sys.modules[player_2_type].Player(game_time, penalty_score)
+    weights1 = {'fruit_util': 0.3, 'opponent_fruits_util': 0.2, 'our_score': 0.2, 'opponent_score': 0.2,
+                   'voronoi': 0.1}
+    weights2 = {'fruit_util': 0.2, 'opponent_fruits_util': 0.2, 'our_score': 0.2, 'opponent_score': 0.2,
+                   'voronoi': 0.2}
+    player_1 = sys.modules[player_1_type].Player(game_time, penalty_score, weights1)
+    player_2 = sys.modules[player_2_type].Player(game_time, penalty_score, weights2)
 
     board = utils.get_board_from_csv(args.board)
 
