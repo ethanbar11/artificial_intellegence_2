@@ -58,17 +58,19 @@ class Player(AbstractPlayer):
         output:
             - direction: tuple, specifying the Player's movement, chosen from self.directions
         """
-        finish_time = time.time() + self.turn_time#+500
+        finish_time = time.time() + self.turn_time
 
         # if self.pos == (0, 4):
         #     finish_time = time.time() + 500
-        depth = 1
+        depth = 2
         best_move = (-np.inf, (-1, 0))
         initial_state = utils.State(self.board, self.graph, (0, 0), self.pos, self.opponent_pos,
                                     self.current_turn,
                                     self.fruits_on_board_dict,
                                     finish_time, None, self.current_player_score, self.opponent_player_score)
         while True:
+            if depth>40:
+                initial_state.finish_time+=500
             try:
                 best_move = self.minimax_algo.search(initial_state, depth, True)
                 if best_move[1] == (0, 0):
@@ -79,7 +81,7 @@ class Player(AbstractPlayer):
                     if len(valid_poses) == 0:
                         raise ValueError("No valid moves")
                     return valid_poses[0][1]
-                elif (best_move[0] in [-1,1]):
+                elif (best_move[0] in [-1, 1]):
                     self.finish_turn(best_move, depth)
                     return best_move[1]
 
@@ -140,8 +142,9 @@ class Player(AbstractPlayer):
             self.initialized_fruits_already = True
 
     def is_goal(self, state):
-        return self.is_all_sides_blocked(state, state.pos) or \
-               self.is_all_sides_blocked(state, state.opponent_pos)
+        if state.turn % 2 == 0:
+            return self.is_all_sides_blocked(state, state.pos) or \
+                   self.is_all_sides_blocked(state, state.opponent_pos)
 
     def is_all_sides_blocked(self, state, pos):
         for direction in self.directions:
@@ -153,10 +156,13 @@ class Player(AbstractPlayer):
 
     def utility(self, state, is_father_max_node):
         if self.is_goal(state):
-            if not is_father_max_node:
-                return 1 if state.current_player_score - self.penalty_score > state.opponent_player_score else -1
-            else:
-                return 1 if state.current_player_score > state.opponent_player_score - self.penalty_score else -1
+            my_score = state.current_player_score
+            opponent_score = state.opponent_player_score
+            if self.is_all_sides_blocked(state, state.pos):
+                my_score -= self.penalty_score
+            if self.is_all_sides_blocked(state, state.opponent_pos):
+                opponent_score -= self.penalty_score
+            return 1 if my_score > opponent_score else -1
 
         NEW_MAX = 100
         weights = {'fruit_util': 0.5, 'opponent_fruits_util': 0.25, 'our_score': 0.5, 'opponent_score': 0.25}
@@ -166,9 +172,9 @@ class Player(AbstractPlayer):
         opponent_score_util = -state.opponent_player_score / self.total_fruit_amount
         utils_val = \
             weights['fruit_util'] * fruit_util_val + \
-            weights['our_score'] * our_score_util #+ \
-            # weights['opponent_score'] * opponent_score_util + \
-            # weights['opponent_fruits_util'] * fruit_util_opponent
+            weights['our_score'] * our_score_util  # + \
+        # weights['opponent_score'] * opponent_score_util + \
+        # weights['opponent_fruits_util'] * fruit_util_opponent
         # TODO: Change to converted value
         converted_value = (utils_val + 1) * NEW_MAX  # grade value from 0 to 100
         return utils_val

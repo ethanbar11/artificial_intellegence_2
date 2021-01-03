@@ -16,14 +16,14 @@ if __name__ == "__main__":
                         help='The type of the second player.',
                         choices=players_options)
 
-    parser.add_argument('-board', default='test_board_2.csv', type=str,
+    parser.add_argument('-board', default='test_board_6.csv', type=str,
                         help='Name of board file (.csv).')
 
     parser.add_argument('-move_time', default=60, type=float,
                         help='Time (sec) for each turn.')
     parser.add_argument('-game_time', default=60, type=float,
                         help='Global game time (sec) for each player.')
-    parser.add_argument('-penalty_score', default=300, type=float,
+    parser.add_argument('-penalty_score', default=1000, type=float,
                         help='Penalty points for a player when it cant move or its time ends.')
     parser.add_argument('-max_fruit_score', default=300, type=float,
                         help='Max points for a fruit on board.')

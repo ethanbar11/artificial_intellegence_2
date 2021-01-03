@@ -73,6 +73,8 @@ class Player(AbstractPlayer):
                                     finish_time, None, self.current_player_score, self.opponent_player_score)
         while True:
             try:
+                if depth > 40:
+                    finish_time += 500
                 best_move = self.minimax_algo.search(initial_state, depth, True)
                 if best_move[1] == (0, 0):
                     initial_state.board[self.pos[0]][self.pos[1]] = -1
@@ -82,7 +84,7 @@ class Player(AbstractPlayer):
                     if len(valid_poses) == 0:
                         raise ValueError("No valid moves")
                     return valid_poses[0][1]
-                elif (best_move[0] == 1):
+                elif (best_move[0] in [-1,1]):
                     self.finish_turn(best_move, depth)
                     return best_move[1]
 
@@ -143,8 +145,9 @@ class Player(AbstractPlayer):
             self.initialized_fruits_already = True
 
     def is_goal(self, state):
-        return self.is_all_sides_blocked(state, state.pos) or \
-               self.is_all_sides_blocked(state, state.opponent_pos)
+        if state.turn % 2 == 0:
+            return self.is_all_sides_blocked(state, state.pos) or \
+                   self.is_all_sides_blocked(state, state.opponent_pos)
 
     def is_all_sides_blocked(self, state, pos):
         for direction in self.directions:
@@ -156,10 +159,13 @@ class Player(AbstractPlayer):
 
     def utility(self, state, is_father_max_node):
         if self.is_goal(state):
-            if not is_father_max_node:
-                return 1 if state.current_player_score - self.penalty_score > state.opponent_player_score else -1
-            else:
-                return 1 if state.current_player_score > state.opponent_player_score - self.penalty_score else -1
+            my_score = state.current_player_score
+            opponent_score = state.opponent_player_score
+            if self.is_all_sides_blocked(state, state.pos):
+                my_score -= self.penalty_score
+            if self.is_all_sides_blocked(state, state.opponent_pos):
+                opponent_score -= self.penalty_score
+            return 1 if my_score > opponent_score else -1
 
         NEW_MAX = 100
         weights = {'fruit_util': 0.2, 'opponent_fruits_util': 0.2, 'our_score': 0.2, 'opponent_score': 0.2,

@@ -186,7 +186,7 @@ class Game:
         #             self.add_fruit(pos)
 
         # TODO: DELETE
-        board = np.loadtxt(open(r'./boards/test_board_2.csv', "rb"), delimiter=" ")
+        board = np.loadtxt(open(r'./boards/test_board_6.csv', "rb"), delimiter=" ")
 
         # mirror board
         board = np.flipud(board)
