@@ -60,6 +60,9 @@ class Player(AbstractPlayer):
         """
         finish_time = time.time() + self.turn_time
 
+        # if self.pos == (0, 6) or self.pos == (6, 3):
+        #     finish_time += 500
+
         if self.pos == (0, 4):
             finish_time = time.time() + 500
         depth = 1
@@ -101,10 +104,11 @@ class Player(AbstractPlayer):
         self.current_turn += 1
         self.board[self.pos[0]][self.pos[1]] = -1
         self.graph.remove_node(self.pos)
-        print(' depth: {} my last pos : {} best move is to move to : {} with grade of : {}'.format(depth,
-                                                                                                   self.pos,
-                                                                                                   new_pos,
-                                                                                                   best_move[0]))
+        print(' depth: {} my last pos : {} best move is to move to : {} with grade of : {} nodes in graph: {}'.format(
+            depth,
+            self.pos,
+            new_pos,
+            best_move[0], len(fetch_connected_nodes(self.graph, new_pos))))
         self.pos = new_pos
         self.board[self.pos[0]][self.pos[1]] = 1
 
@@ -158,16 +162,19 @@ class Player(AbstractPlayer):
                 return 1 if state.current_player_score > state.opponent_player_score - self.penalty_score else -1
 
         NEW_MAX = 100
-        weights = {'fruit_util': 0.1, 'opponent_fruits_util': 0.25, 'our_score': 0.5, 'opponent_score': 0.25}
+        weights = {'fruit_util': 0.2, 'opponent_fruits_util': 0.2, 'our_score': 0.2, 'opponent_score': 0.2,
+                   'voronoi': 0.2}
         fruit_util_val = self.fruit_util(state, True)
         fruit_util_opponent = self.fruit_util(state, False)
         our_score_util = state.current_player_score / self.total_fruit_amount
         opponent_score_util = -state.opponent_player_score / self.total_fruit_amount
+        voronoi_util = self.voronoi_util(state)
         utils_val = \
             weights['fruit_util'] * fruit_util_val + \
             weights['our_score'] * our_score_util + \
             weights['opponent_score'] * opponent_score_util + \
-            weights['opponent_fruits_util'] * fruit_util_opponent
+            weights['opponent_fruits_util'] * fruit_util_opponent \
+            + weights['voronoi'] * voronoi_util
         # TODO: Change to converted value
         converted_value = (utils_val + 1) * NEW_MAX  # grade value from 0 to 100
         return utils_val
@@ -278,6 +285,11 @@ class Player(AbstractPlayer):
         ret_val = 0 if weighted_sum == 0 else weighted_sum / self.total_fruit_amount
         return ret_val if my_player_heurisitic else -ret_val
 
+    def voronoi_util(self, state):
+        center_nodes = {state.pos, state.opponent_pos}
+        cells = nx.voronoi_cells(state.graph, center_nodes)
+        return (len(cells[state.pos]) - len(state.opponent_pos)) / len(state.graph.nodes)
+
     def calc_dist_to_pos(self, state, my_pos, fruit_pos):
         if nx.has_path(state.graph, source=my_pos, target=fruit_pos):
             return len(nx.shortest_path(state.graph, source=my_pos, target=fruit_pos)) - 1
@@ -312,3 +324,14 @@ def create_graph_of_board(board):
                 graph.remove_node((i, j))
 
     return graph, pos, opponent_pos
+
+
+def fetch_connected_nodes(G, node, seen=None):
+    if seen == None:
+        seen = set([node])
+    for neighbor in G.neighbors(node):
+        # print(neighbor)
+        if neighbor not in seen:
+            seen.add(neighbor)
+            fetch_connected_nodes(G, neighbor, seen)
+    return seen

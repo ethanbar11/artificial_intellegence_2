@@ -58,10 +58,10 @@ class Player(AbstractPlayer):
         output:
             - direction: tuple, specifying the Player's movement, chosen from self.directions
         """
-        finish_time = time.time() + self.turn_time
+        finish_time = time.time() + self.turn_time#+500
 
-        if self.pos == (0, 4):
-            finish_time = time.time() + 500
+        # if self.pos == (0, 4):
+        #     finish_time = time.time() + 500
         depth = 1
         best_move = (-np.inf, (-1, 0))
         initial_state = utils.State(self.board, self.graph, (0, 0), self.pos, self.opponent_pos,
@@ -79,7 +79,7 @@ class Player(AbstractPlayer):
                     if len(valid_poses) == 0:
                         raise ValueError("No valid moves")
                     return valid_poses[0][1]
-                elif (best_move[0] == 1):
+                elif (best_move[0] in [-1,1]):
                     self.finish_turn(best_move, depth)
                     return best_move[1]
 
@@ -101,10 +101,11 @@ class Player(AbstractPlayer):
         self.current_turn += 1
         self.board[self.pos[0]][self.pos[1]] = -1
         self.graph.remove_node(self.pos)
-        print(' depth: {} my last pos : {} best move is to move to : {} with grade of : {}'.format(depth,
-                                                                                                   self.pos,
-                                                                                                   new_pos,
-                                                                                                   best_move[0]))
+        print(' depth: {} my last pos : {} best move is to move to : {} with grade of : {} nodes in graph: {}'.format(
+            depth,
+            self.pos,
+            new_pos,
+            best_move[0], len(fetch_connected_nodes(self.graph, new_pos))))
         self.pos = new_pos
         self.board[self.pos[0]][self.pos[1]] = 1
 
@@ -158,16 +159,16 @@ class Player(AbstractPlayer):
                 return 1 if state.current_player_score > state.opponent_player_score - self.penalty_score else -1
 
         NEW_MAX = 100
-        weights = {'fruit_util': 0.1, 'opponent_fruits_util': 0.25, 'our_score': 0.5, 'opponent_score': 0.25}
+        weights = {'fruit_util': 0.5, 'opponent_fruits_util': 0.25, 'our_score': 0.5, 'opponent_score': 0.25}
         fruit_util_val = self.fruit_util(state, True)
         fruit_util_opponent = self.fruit_util(state, False)
         our_score_util = state.current_player_score / self.total_fruit_amount
         opponent_score_util = -state.opponent_player_score / self.total_fruit_amount
         utils_val = \
             weights['fruit_util'] * fruit_util_val + \
-            weights['our_score'] * our_score_util + \
-            weights['opponent_score'] * opponent_score_util + \
-            weights['opponent_fruits_util'] * fruit_util_opponent
+            weights['our_score'] * our_score_util #+ \
+            # weights['opponent_score'] * opponent_score_util + \
+            # weights['opponent_fruits_util'] * fruit_util_opponent
         # TODO: Change to converted value
         converted_value = (utils_val + 1) * NEW_MAX  # grade value from 0 to 100
         return utils_val
@@ -312,3 +313,14 @@ def create_graph_of_board(board):
                 graph.remove_node((i, j))
 
     return graph, pos, opponent_pos
+
+
+def fetch_connected_nodes(G, node, seen=None):
+    if seen == None:
+        seen = set([node])
+    for neighbor in G.neighbors(node):
+        # print(neighbor)
+        if neighbor not in seen:
+            seen.add(neighbor)
+            fetch_connected_nodes(G, neighbor, seen)
+    return seen
